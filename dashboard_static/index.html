@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>VideoScreen 直播切片系统</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/enhancements.css?v=20261108-8">
+</head>
+<body>
+  <header class="app-bar">
+    <div class="app-brand">
+      <div class="brand-text">
+        <h1 class="app-title">直播切片工作台</h1>
+        <span class="brand-sub">VIDEOSCREEN STUDIO</span>
+      </div>
+      <div class="scan-status-badge" id="auto-scan-pill" title="打开或刷新网页时自动扫描新素材，也可点击立即手动扫描">
+        <span class="pulse-dot"></span>
+        <span class="scan-text">自动扫描就绪</span>
+      </div>
+      <div class="ai-status-badge" id="ai-status-pill" title="点击配置 AI 大模型引擎 (支持本地私有模型与云端 API)">
+        <span class="ai-icon">🤖</span>
+        <span class="ai-text" id="ai-badge-text">AI: 本地 Qwen</span>
+        <span class="ai-gear" title="设置">⚙️</span>
+      </div>
+      <div class="radar-status-badge" id="radar-status-pill" title="标杆账号爆款雷达与秒级同款跟剪">
+        <span class="radar-icon">🎯</span>
+        <span class="radar-text">爆款雷达</span>
+        <span class="radar-breaking-badge" id="radar-breaking-badge">2</span>
+      </div>
+    </div>
+
+    <nav class="app-tabs tabs">
+      <button class="tab" data-tab="recorder">
+        <span class="tab-label">直播录制</span>
+        <span id="tab-recorder-badge" class="tab-badge" style="display:none;">运行中</span>
+      </button>
+      <button class="tab active" data-tab="sources">
+        <span class="tab-label">素材管理</span>
+        <span id="tab-sources-badge" class="tab-badge">0</span>
+      </button>
+      <button class="tab" data-tab="clips">
+        <span class="tab-label">成片发布</span>
+        <span id="tab-clips-badge" class="tab-badge">0</span>
+      </button>
+      <button class="tab" data-tab="jobs">
+        <span class="tab-label">任务日志</span>
+        <span id="tab-jobs-badge" class="tab-badge running-badge" style="display:none;">运行中</span>
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <button data-action="transcribe_all" title="转写未转写的新素材">转写新素材</button>
+      <button data-action="analyze_all" title="全量分析视频并生成候选窗口">分析素材</button>
+      <button data-action="cut_all" class="primary" title="剪辑所有满足评分条件的候选片段">剪辑全部候选</button>
+      <button data-action="sync_queue" class="secondary" title="同步发布队列状态">同步队列</button>
+      <button id="toggle-page-fluid" class="secondary" title="切换页面宽度：100%宽屏铺满屏幕 / 标准居中">宽屏铺满</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="funnel-pipeline" class="funnel-pipeline-section">
+      <div class="pipeline-flow">
+        <div class="funnel-step" data-target-tab="sources" data-target-filter="all" title="点击查看全部素材">
+          <span class="step-num" id="funnel-sources">0</span>
+          <span class="step-name">原始素材</span>
+        </div>
+        <div class="funnel-arrow">→</div>
+        <div class="funnel-step" data-target-tab="sources" data-target-filter="transcribed" title="点击查看已转写素材">
+          <span class="step-num" id="funnel-transcribed">0</span>
+          <span class="step-name">转写就绪</span>
+        </div>
+        <div class="funnel-arrow">→</div>
+        <div class="funnel-step" data-target-tab="sources" data-target-filter="analyzed" title="点击查看已分析素材">
+          <span class="step-num" id="funnel-analyzed">0</span>
+          <span class="step-name">AI 已分析</span>
+        </div>
+        <div class="funnel-arrow">→</div>
+        <div class="funnel-step" data-target-tab="clips" data-target-filter="all" title="点击查看所有成片">
+          <span class="step-num highlight" id="funnel-clips">0</span>
+          <span class="step-name">最终成片</span>
+        </div>
+        <div class="funnel-arrow">→</div>
+        <div class="funnel-step" data-target-tab="clips" data-target-filter="needs_copy" title="点击查看待发布成片">
+          <span class="step-num warning" id="funnel-pending">0</span>
+          <span class="step-name">待发布</span>
+        </div>
+        <div class="funnel-arrow">→</div>
+        <div class="funnel-step" data-target-tab="clips" data-target-filter="ready_copy" title="点击查看已发布成片">
+          <span class="step-num success" id="funnel-published">0</span>
+          <span class="step-name">抖音已发布</span>
+        </div>
+      </div>
+
+      <div class="storage-capsule">
+        <div class="storage-info">
+          <span class="storage-icon">💾</span>
+          <span class="storage-text">磁盘剩余 <strong id="disk-free-val">--</strong></span>
+          <span class="storage-sep">·</span>
+          <span class="storage-clips">成片占用 <strong id="clips-size-val">--</strong></span>
+          <span class="storage-sep">·</span>
+          <span class="storage-clean">原素材可释放 <strong id="cleanable-val" class="cleanable-green">--</strong></span>
+        </div>
+        <button id="quick-clean-btn" class="quick-clean-btn" title="查看并清理已剪辑的原视频节省空间">一键瘦身</button>
+      </div>
+    </section>
+
+    <section id="recorder" class="panel">
+      <div class="panel-title">
+        <div>
+          <h2>直播监控自动录制</h2>
+          <p id="recorder-sub-desc">已集成后台开播监听服务，自动录制抖音/快手多机位直播并分段存储至录像库</p>
+        </div>
+        <div class="recorder-actions" style="display:flex;gap:8px;align-items:center;">
+          <button id="btn-start-recorder" class="primary" style="background:#16a34a;color:#fff;border-color:#16a34a;">启动录制服务</button>
+          <button id="btn-stop-recorder" class="danger">停止录制服务</button>
+          <button id="btn-restart-recorder" class="secondary">重启服务</button>
+          <button id="btn-refresh-recorder" class="secondary">刷新</button>
+        </div>
+      </div>
+
+      <div class="recorder-overview-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px;">
+        <div class="rec-card stat" id="rec-status-card">
+          <span>录制服务状态</span>
+          <strong id="rec-status-val" style="font-size:20px;color:#16a34a;">检测中...</strong>
+        </div>
+        <div class="rec-card stat" id="rec-stream-card">
+          <span>活跃录制流 (FFmpeg)</span>
+          <strong id="rec-stream-val" style="font-size:20px;color:#0284c7;">0 场直播</strong>
+        </div>
+        <div class="rec-card stat" id="rec-storage-card">
+          <span>录像库占用</span>
+          <strong id="rec-storage-val" style="font-size:20px;color:#8b5cf6;">0 GB</strong>
+        </div>
+        <div class="rec-card stat" id="rec-rooms-card">
+          <span>监控直播间</span>
+          <strong id="rec-rooms-val" style="font-size:20px;color:#ea580c;">0 个主播</strong>
+        </div>
+      </div>
+
+      <div class="recorder-layout-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <!-- 左侧：直播间管理 -->
+        <div class="rec-panel-box" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+          <div class="box-head" style="display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;font-size:15px;">监控直播间清单</h3>
+            <span style="font-size:12px;color:var(--muted);">开播自动抓流</span>
+          </div>
+          <div class="table-wrap" style="max-height:360px;overflow-y:auto;">
+            <table id="recorder-rooms-table" style="width:100%;font-size:13px;">
+              <thead>
+                <tr>
+                  <th style="width:65px;">状态</th>
+                  <th style="width:100px;">主播名称</th>
+                  <th style="width:90px;">平台</th>
+                  <th>直播间地址</th>
+                  <th style="width:120px;text-align:right;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="recorder-rooms-body">
+                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="add-room-form" style="display:flex;gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid var(--line);">
+            <input id="new-room-url" placeholder="粘贴直播间链接 (https://live.douyin.com/...)" style="flex:1;min-width:0;">
+            <input id="new-room-name" placeholder="主播名称 (如: 董路)" style="width:140px;min-width:0;">
+            <button id="btn-add-room" class="primary" style="white-space:nowrap;">添加直播间</button>
+          </div>
+        </div>
+
+        <!-- 右侧：实时日志 -->
+        <div class="rec-panel-box" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+          <div class="box-head" style="display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;font-size:15px;">录制实时日志</h3>
+            <div style="display:flex;gap:6px;">
+              <button id="btn-copy-rec-log" class="secondary" style="padding:4px 10px;font-size:12px;">复制日志</button>
+              <button id="btn-reload-rec-log" class="secondary" style="padding:4px 10px;font-size:12px;">刷新</button>
+            </div>
+          </div>
+          <pre id="recorder-log-view" class="recorder-log-pre" style="flex:1;min-height:360px;max-height:480px;background:#0f172a;color:#38bdf8;font-family:monospace;font-size:12px;line-height:1.5;padding:12px;border-radius:8px;overflow:auto;margin:0;">正在获取实时日志...</pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="sources" class="panel active">
+      <div class="panel-title">
+        <div><h2>视频素材</h2><p>显示转写、分析、剪辑与发布进度</p></div>
+        <div class="source-actions">
+          <button id="select-cleanable-sources">全选可删除</button>
+          <button id="clear-source-selection">取消选择</button>
+          <button id="delete-selected-sources" class="danger">删除所选原素材</button>
+          <input id="source-search" placeholder="搜索素材名称">
+        </div>
+      </div>
+      <div id="source-filters" class="source-filters"></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>选择</th><th>素材</th><th>流程进度</th><th>候选</th><th>成片</th><th>发布</th><th>操作</th></tr></thead>
+        <tbody id="source-body"></tbody>
+      </table></div>
+    </section>
+
+    <section id="clips" class="panel">
+      <div class="panel-title">
+        <div><h2>成片与发布</h2><p>勾选成片后依次自动准备；失败时可切换手动发布</p></div>
+        <div class="selection-actions" id="clip-actions-bar">
+          <span id="pending-actions-group" style="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <label><input id="ai-cover" type="checkbox" checked> AI封面</label>
+            <label><input id="publish-declaration" type="checkbox" checked> 虚构演绎，仅供娱乐</label>
+            <label><input id="auto-final-publish" type="checkbox" checked> 自动点击发布</label>
+            <button id="select-all-pending">全选待发布</button>
+            <button id="batch-ai-write" class="secondary" title="为勾选或待发布的成片批量生成AI专业评论文案">批量AI文案</button>
+            <button id="upload-selected" class="primary">自动发布所选</button>
+            <button id="batch-delete-clips" class="danger" title="彻底删除勾选的未发布成片并立即释放磁盘空间">批量删除所选</button>
+            <button id="cancel-auto-publish" class="danger">取消正在自动发布</button>
+          </span>
+          <span id="published-actions-group" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button id="select-all-published">全选已发布</button>
+            <button id="deselect-all-published">取消全选</button>
+            <button id="batch-cleanup-published" class="secondary" title="清理勾选已发布成片的本地大视频文件以释放磁盘空间，完整保留抖音已发布状态及流量归因记录">批量释放空间 (保留记录)</button>
+            <button id="batch-delete-published" class="danger" title="彻底删除勾选的已发布成片及发布记录">彻底删除记录</button>
+            <button id="batch-revert-published">批量改回待发布</button>
+          </span>
+        </div>
+      </div>
+      <div class="clip-stage-bar">
+        <div class="stage-tabs" id="clip-stage-tabs">
+          <button class="stage-tab active" data-stage="pending">
+            待发布 <span id="stage-pending-count" class="stage-pill">0</span>
+          </button>
+          <button class="stage-tab" data-stage="published">
+            已发布 <span id="stage-published-count" class="stage-pill published-pill">0</span>
+          </button>
+          <button class="stage-tab" data-stage="all">
+            全部成片 <span id="stage-all-count" class="stage-pill">0</span>
+          </button>
+        </div>
+
+        <div class="view-switcher" id="view-switcher">
+          <button class="view-btn active" data-view="grid" title="网格卡片视图">⊞ 网格</button>
+          <button class="view-btn" data-view="list" title="紧凑列表视图">☰ 列表</button>
+        </div>
+      </div>
+
+      <!-- 流量监控总览与洞察胶囊 -->
+      <div class="traffic-overview-bar" id="traffic-overview-bar">
+        <div class="traffic-metrics">
+          <div class="metric-item">
+            <span class="metric-label">监控视频</span>
+            <strong class="metric-val" id="metric-tracked-count">0</strong>
+          </div>
+          <div class="metric-sep">·</div>
+          <div class="metric-item">
+            <span class="metric-label">总播放量</span>
+            <strong class="metric-val highlight" id="metric-total-plays">0</strong>
+          </div>
+          <div class="metric-sep">·</div>
+          <div class="metric-item">
+            <span class="metric-label">总点赞</span>
+            <strong class="metric-val" id="metric-total-likes">0</strong>
+          </div>
+          <div class="metric-sep">·</div>
+          <div class="metric-item">
+            <span class="metric-label">🔥 爆款切片(≥1w)</span>
+            <strong class="metric-val viral" id="metric-viral-count">0</strong>
+          </div>
+          <div class="metric-sep">·</div>
+          <div class="metric-item">
+            <span class="metric-label">均互动率</span>
+            <strong class="metric-val" id="metric-interaction-rate">0%</strong>
+          </div>
+        </div>
+        <div class="traffic-actions">
+          <button id="btn-sync-traffic" class="traffic-btn" title="同步/刷新已发布视频的最新播放与互动数据">刷新流量</button>
+          <button id="btn-traffic-insights" class="traffic-btn primary" title="查看题材流量归因与 AI 权重优化建议">流量归因与AI反哺</button>
+        </div>
+      </div>
+
+      <div class="clip-toolbar">
+        <div id="clip-filters" class="clip-filters">
+          <button class="clip-filter active" data-clip-filter="all">全部 <span id="clip-filter-all-count">0</span></button>
+          <button class="clip-filter" data-clip-filter="viral">🔥 爆款切片 <span id="clip-filter-viral-count">0</span></button>
+          <button class="clip-filter" data-clip-filter="high_score">高分精选(≥80) <span id="clip-filter-score-count">0</span></button>
+          <button class="clip-filter" data-clip-filter="needs_copy">文案待生成 <span id="clip-filter-needs-copy-count">0</span></button>
+          <button class="clip-filter" data-clip-filter="ready_copy">文案已就绪 <span id="clip-filter-ready-copy-count">0</span></button>
+        </div>
+        <div class="clip-search-wrap">
+          <select id="clip-sort" class="clip-sort" aria-label="成片排序方式">
+            <option value="default">默认顺序</option>
+            <option value="play_desc">播放量最高</option>
+            <option value="like_desc">点赞数最高</option>
+            <option value="velocity_desc">突增速度最快</option>
+            <option value="score_desc">评分最高</option>
+            <option value="duration_desc">时长最长</option>
+            <option value="duration_asc">时长最短</option>
+          </select>
+          <input id="clip-search" placeholder="搜索成片标题、话题或关键词">
+        </div>
+      </div>
+
+      <div id="clip-display-wrap">
+        <div id="clip-display-area" class="clip-grid"></div>
+      </div>
+    </section>
+
+    <section id="jobs" class="panel">
+      <div class="panel-title">
+        <div><h2>处理过程</h2><p>实时显示分析窗口、剪辑进度、上传结果与失败原因</p></div>
+        <div class="job-actions">
+          <button id="copy-log-btn" title="复制当前完整日志到剪贴板">复制完整日志</button>
+        </div>
+      </div>
+      <div class="job-layout">
+        <div id="job-list"></div>
+        <div class="log-panel">
+          <div id="log-title">选择任务查看详细过程</div>
+          <pre id="log-view">等待任务……</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="video-modal" class="video-modal" aria-hidden="true">
+    <div class="video-dialog" id="video-dialog" role="dialog" aria-modal="true" aria-labelledby="video-modal-title">
+      <div class="video-dialog-head">
+        <div class="video-dialog-title-box">
+          <span class="video-badge-icon">🎬</span>
+          <h3 id="video-modal-title">播放成片</h3>
+        </div>
+
+        <div class="video-controls-toolbar">
+          <!-- 画面显示比例切换 -->
+          <div class="v-ctrl-group" title="切换画面显示宽高比例">
+            <span class="v-ctrl-tag">比例</span>
+            <button class="v-ratio-btn active" data-ratio="auto">自适应</button>
+            <button class="v-ratio-btn" data-ratio="16/9">16:9 横屏</button>
+            <button class="v-ratio-btn" data-ratio="9/16" title="短视频竖屏模式 (抖音/小红书)">9:16 竖屏</button>
+            <button class="v-ratio-btn" data-ratio="4/3">4:3</button>
+            <button class="v-ratio-btn" data-ratio="21/9">21:9</button>
+          </div>
+
+          <!-- 画面填充模式 -->
+          <div class="v-ctrl-group" title="切换画面缩放与填充模式">
+            <span class="v-ctrl-tag">填充</span>
+            <button class="v-fit-btn active" data-fit="contain" title="保持比例，完整展示（带黑边）">包含</button>
+            <button class="v-fit-btn" data-fit="cover" title="裁切铺满容器（无黑边）">裁切铺满</button>
+            <button class="v-fit-btn" data-fit="fill" title="拉伸填满画面">拉伸铺满</button>
+          </div>
+
+          <!-- 铺满全屏与窗口模式 -->
+          <div class="v-ctrl-group">
+            <button id="btn-theater-mode" class="v-btn" title="剧院大屏模式（铺满浏览器窗口）">🗖 剧院铺满</button>
+            <button id="btn-fullscreen-mode" class="v-btn primary-v-btn" title="铺满全屏幕（系统级全屏）">⛶ 铺满全屏</button>
+            <button id="close-video-modal" class="v-close-btn" aria-label="关闭播放器">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="video-player-container" id="video-player-container">
+        <video id="clip-player" controls playsinline preload="metadata"></video>
+        <div id="video-hud" class="video-hud" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- 右侧详情与文案抽屉 (Master-Detail Drawer) -->
+  <div id="clip-drawer" class="clip-drawer" aria-hidden="true">
+    <div class="clip-drawer-backdrop" id="close-drawer-backdrop"></div>
+    <div class="clip-drawer-panel">
+      <div class="clip-drawer-head">
+        <div class="drawer-title-wrap">
+          <span class="drawer-badge badge" id="drawer-badge">待发布</span>
+          <h3 id="drawer-title">成片详情与发布文案</h3>
+        </div>
+        <button id="close-clip-drawer" class="close-drawer-btn" aria-label="关闭抽屉">✕</button>
+      </div>
+      <div class="clip-drawer-body" id="drawer-body"></div>
+    </div>
+  </div>
+
+  <!-- 素材悬浮批量操作栏 (Floating Action Bar) -->
+  <div id="source-floating-bar" class="source-floating-bar" style="display:none;">
+    <div class="floating-bar-info">
+      已选择 <strong id="floating-selected-count">0</strong> 个已剪辑原素材
+    </div>
+    <div class="floating-bar-actions">
+      <button id="floating-delete-btn" class="danger">批量删除所选原素材</button>
+      <button id="floating-cancel-btn">取消选择</button>
+    </div>
+  </div>
+
+  <!-- 自定义确认弹窗 (Non-blocking Confirm Modal) -->
+  <div id="confirm-modal" class="confirm-modal" aria-hidden="true">
+    <div class="confirm-backdrop" id="confirm-backdrop"></div>
+    <div class="confirm-dialog" role="dialog" aria-modal="true">
+      <div class="confirm-head">
+        <h3 id="confirm-modal-title">请确认操作</h3>
+        <button id="confirm-close-btn" class="close-drawer-btn" aria-label="关闭">✕</button>
+      </div>
+      <div class="confirm-body" id="confirm-modal-message">
+        确认执行该操作吗？
+      </div>
+      <div class="confirm-actions">
+        <button id="confirm-cancel-btn">取消</button>
+        <button id="confirm-ok-btn" class="primary">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI 大模型与文案引擎配置弹窗 (AI Config Modal) -->
+  <div id="ai-config-modal" class="ai-config-modal" aria-hidden="true">
+    <div class="ai-config-backdrop" id="ai-config-backdrop"></div>
+    <div class="ai-config-dialog" role="dialog" aria-modal="true" aria-labelledby="ai-modal-title">
+      <div class="ai-config-head">
+        <div class="ai-head-title">
+          <h3 id="ai-modal-title">🤖 AI 大模型与文案引擎配置</h3>
+          <p>支持本地私有模型 (Ollama) 与云端大模型 API (DeepSeek, 通义千问, 硅基流动等)</p>
+        </div>
+        <button id="close-ai-config-modal" class="close-drawer-btn" aria-label="关闭">✕</button>
+      </div>
+
+      <div class="ai-config-body">
+        <!-- 提供商模式选择卡片 -->
+        <div class="ai-provider-switcher">
+          <label class="provider-radio-card active" id="card-provider-ollama">
+            <input type="radio" name="ai-provider-radio" value="ollama" checked>
+            <div class="card-inner">
+              <span class="card-icon">🏠</span>
+              <div class="card-text">
+                <strong>本地私有模型 (Ollama)</strong>
+                <small>完全本地运行，离线私密，免 API 费用</small>
+              </div>
+            </div>
+          </label>
+          <label class="provider-radio-card" id="card-provider-api">
+            <input type="radio" name="ai-provider-radio" value="api">
+            <div class="card-inner">
+              <span class="card-icon">☁️</span>
+              <div class="card-text">
+                <strong>云端大模型 API</strong>
+                <small>DeepSeek, 阿里通义千问, 硅基流动等 (速度快/免显卡)</small>
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <!-- 本地 Ollama 配置表单 -->
+        <div id="section-ollama" class="ai-section">
+          <div class="form-group">
+            <label for="ollama-base-url">Ollama 服务地址</label>
+            <input id="ollama-base-url" type="text" placeholder="http://127.0.0.1:11434" value="http://127.0.0.1:11434">
+          </div>
+          <div class="form-group">
+            <label for="ollama-model">本地模型名称</label>
+            <input id="ollama-model" type="text" placeholder="qwen2.5:7b" value="qwen2.5:7b">
+            <div class="input-hint">常用模型推荐：<code>qwen2.5:7b</code>, <code>qwen2.5:14b</code>, <code>deepseek-r1:8b</code></div>
+          </div>
+        </div>
+
+        <!-- 云端 API 配置表单 -->
+        <div id="section-api" class="ai-section" style="display:none;">
+          <div class="form-group">
+            <label for="api-preset-select">快捷服务商预设 (选择后自动填充地址与模型)</label>
+            <select id="api-preset-select" class="form-select">
+              <option value="deepseek">DeepSeek (深度求索 - 强烈推荐，性价比极高)</option>
+              <option value="qwen">阿里通义千问 (DashScope)</option>
+              <option value="siliconflow">硅基流动 (SiliconFlow / DeepSeek-V3)</option>
+              <option value="zhipu">智谱清言 (Zhipu AI / GLM-4)</option>
+              <option value="moonshot">月之暗面 (Moonshot / Kimi)</option>
+              <option value="openai">OpenAI (GPT-4o-mini / GPT-4o)</option>
+              <option value="custom">自定义兼容 OpenAI 格式接口</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="api-base-url">API 接口基础地址 (Base URL)</label>
+            <input id="api-base-url" type="text" placeholder="https://api.deepseek.com/v1" value="https://api.deepseek.com/v1">
+          </div>
+          <div class="form-group">
+            <label for="api-key">API 密钥 (API Key)</label>
+            <div class="password-wrap">
+              <input id="api-key" type="password" placeholder="sk-..." autocomplete="off">
+              <button type="button" id="toggle-key-visibility" class="key-vis-btn" title="显示/隐藏密钥">👁️</button>
+            </div>
+            <div class="input-hint">密钥仅保存在本地 <code>config.json</code>，安全用于文案生成和分析</div>
+          </div>
+          <div class="form-group">
+            <label for="api-model">模型名称 (Model ID)</label>
+            <input id="api-model" type="text" placeholder="deepseek-chat" value="deepseek-chat">
+          </div>
+        </div>
+
+        <!-- 通用设置: Temperature -->
+        <div class="form-group">
+          <div class="label-with-val">
+            <label for="ai-temperature">生成创意度 (Temperature): <span id="temp-val" class="temp-badge">0.55</span></label>
+          </div>
+          <input id="ai-temperature" type="range" min="0.1" max="1.0" step="0.05" value="0.55" class="temp-slider">
+          <div class="input-hint">切片分析建议 0.4 ~ 0.6，既保持逻辑严密又具有语言表现力</div>
+        </div>
+
+        <!-- 连通性测试结果面板 -->
+        <div id="ai-test-result" class="ai-test-box" style="display:none;"></div>
+      </div>
+
+      <div class="ai-config-foot">
+        <button id="btn-test-ai" class="secondary" title="发送一条测试提示词验证当前服务和密钥是否通畅">⚡ 测试连接</button>
+        <div class="foot-right">
+          <button id="btn-cancel-ai-config">取消</button>
+          <button id="btn-save-ai-config" class="primary">💾 保存并应用配置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 流量归因与 AI 反哺弹窗 (Traffic Insights & AI Optimization Modal) -->
+  <div id="traffic-insights-modal" class="traffic-insights-modal" aria-hidden="true">
+    <div class="traffic-insights-backdrop" id="traffic-insights-backdrop"></div>
+    <div class="traffic-insights-dialog" role="dialog" aria-modal="true">
+      <div class="traffic-insights-head">
+        <div class="head-title">
+          <h3>📊 流量归因分析与 AI 规则自适应反哺</h3>
+          <p>基于实际播放与互动数据，自动归类高流量题材，并动态调整切片筛选权重</p>
+        </div>
+        <button id="close-traffic-modal" class="close-drawer-btn" aria-label="关闭">✕</button>
+      </div>
+      <div class="traffic-insights-body" id="traffic-insights-body">
+        <div class="insights-loading">正在分析各题材流量表现...</div>
+      </div>
+      <div class="traffic-insights-foot">
+        <button id="btn-apply-traffic-weights" class="primary" title="将高流量词的建议权重自动写入配置，使后续剪辑更加精准">⚡ 一键应用 AI 流量权重优化</button>
+        <button id="btn-close-traffic-insights">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 标杆爆款雷达与同款拦截系统弹窗 (Benchmark Radar Modal) -->
+  <div id="benchmark-radar-modal" class="traffic-insights-modal" aria-hidden="true">
+    <div class="traffic-insights-backdrop" id="radar-backdrop"></div>
+    <div class="traffic-insights-dialog radar-dialog" role="dialog" aria-modal="true">
+      <div class="traffic-insights-head">
+        <div class="head-title">
+          <h3>🎯 标杆爆款雷达与秒级同款拦截</h3>
+          <p>实时监控标杆切片账号高流题材，毫秒级定位我们录像素材中的同款观点并一键跟剪</p>
+        </div>
+        <button id="close-radar-modal" class="close-drawer-btn" aria-label="关闭">✕</button>
+      </div>
+
+      <div class="traffic-insights-body radar-body" id="radar-body">
+        <!-- 统计面板 -->
+        <div class="radar-summary-grid">
+          <div class="radar-stat-box" id="box-tracked-accounts" style="cursor:pointer;" title="点击展开/收起标杆监控账号管理面板">
+            <span class="stat-num" id="radar-tracked-count">3</span>
+            <span class="stat-lbl">监控标杆账号 <span style="font-size:11px;color:var(--green);font-weight:bold;">⚙️ 管理</span></span>
+          </div>
+          <div class="radar-stat-box highlight">
+            <span class="stat-num" id="radar-breaking-stat">2</span>
+            <span class="stat-lbl">实时爆发题材</span>
+          </div>
+          <div class="radar-stat-box matched">
+            <span class="stat-num" id="radar-matched-stat">2</span>
+            <span class="stat-lbl">素材库命中同款</span>
+          </div>
+        </div>
+
+        <!-- 标杆监控账号管理面板 (Collapsible Accounts Management Panel) -->
+        <div id="radar-accounts-panel" class="radar-accounts-panel" style="display:none;">
+          <div class="accounts-head">
+            <strong>👥 监控的同行切片标杆账号</strong>
+            <span style="font-size:12px;color:var(--muted);">输入你关注的优秀切片账号名称或主页，系统将重点关注其动向</span>
+          </div>
+
+          <!-- 已监控账号标签列表 -->
+          <div id="radar-accounts-list" class="radar-accounts-chips">
+            <!-- 动态渲染，如：[抖音] 董路足球精选 ✕ -->
+          </div>
+
+          <!-- 新增监控账号表单 -->
+          <div class="add-account-bar">
+            <input id="new-account-name" type="text" placeholder="输入同行账号名称 (如：董路战术精剪)">
+            <select id="new-account-platform">
+              <option value="douyin">抖音</option>
+              <option value="kuaishou">快手</option>
+              <option value="channels">视频号</option>
+              <option value="xiaohongshu">小红书</option>
+            </select>
+            <input id="new-account-homepage" type="text" placeholder="主页链接 / UID (选填)">
+            <button id="btn-submit-add-account" class="primary" style="white-space:nowrap;padding:7px 14px;">+ 添加账号</button>
+          </div>
+        </div>
+
+        <!-- 标杆视频无水印下载与深度二次创作卡片 (Remix Card) -->
+        <div class="radar-remix-card">
+          <div class="remix-head">
+            <span class="remix-icon">🎬</span>
+            <div style="flex:1;">
+              <strong>标杆短视频无水印下载 & 智能二次创作重构</strong>
+              <div class="remix-subtitle">粘贴抖音/快手短视频分享链接，自动下载原片并执行边缘微裁、无感变速、质感调色及 AI 原创新文案</div>
+            </div>
+            <span class="remix-badge">🔥 算法防重</span>
+          </div>
+
+          <div class="remix-input-box">
+            <textarea id="remix-url-input" rows="2" placeholder="粘贴同行视频的分享链接（支持直接粘贴整段分享文案，如：7.21 复制打开抖音... https://v.douyin.com/xxx/ 或直接输入网址）"></textarea>
+          </div>
+
+          <div class="remix-options-bar">
+            <div class="remix-presets">
+              <label class="remix-chk"><input type="checkbox" id="chk-remix-speed" checked> 1.02x 智能微变速</label>
+              <label class="remix-chk"><input type="checkbox" id="chk-remix-crop" checked> 边缘微裁 3% (除杂质)</label>
+              <label class="remix-chk"><input type="checkbox" id="chk-remix-color" checked> 画质增强与质感调色</label>
+              <label class="remix-chk"><input type="checkbox" id="chk-remix-ai" checked> AI 重构黄金爆款标题</label>
+            </div>
+            <button id="btn-start-remix" class="primary remix-action-btn">⚡ 一键下载并全自动二创入库</button>
+          </div>
+
+          <!-- 二创处理状态反馈条 -->
+          <div id="remix-status-box" class="remix-status-box" style="display:none;"></div>
+        </div>
+
+        <!-- 智能同款秒搜器 -->
+        <div class="radar-search-card">
+          <div class="search-head">
+            <span class="search-icon">🔍</span>
+            <strong>全素材库同款毫秒级检索</strong>
+            <span class="search-tip">粘贴任意抖音/快手同行的爆款文案或话题，秒级找出你在哪场直播说过</span>
+          </div>
+          <div class="radar-search-bar">
+            <input id="radar-search-input" type="text" placeholder="输入同行的爆款标题或金句（如：不敢对抗就别谈留洋 / 浮岛敏青训理念 / 45度防守）">
+            <button id="btn-radar-search" class="primary">定位同款原片</button>
+          </div>
+          <div id="radar-search-results" class="radar-search-results" style="display:none;"></div>
+        </div>
+
+        <!-- 录入/监控爆款标题头部 -->
+        <div class="radar-section-head">
+          <h4>🔥 侦测到的标杆实时爆款</h4>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button id="btn-shuffle-radar" class="secondary-sm" title="随机轮换一组全新标杆高赞选题">🎲 换一批热点</button>
+            <button id="btn-discover-radar" class="secondary-sm" title="从本地素材高光片段中挖掘全新热点">💡 AI挖掘新爆款</button>
+            <button id="btn-seed-radar" class="secondary-sm" title="载入标杆全库并立即匹配您的录像库">📥 标杆全库载入</button>
+            <button id="btn-toggle-add-radar" class="secondary-sm">+ 手动录入同行爆款</button>
+          </div>
+        </div>
+
+        <!-- 手动录入表单 -->
+        <div id="add-radar-form" class="add-radar-form" style="display:none;">
+          <input id="new-radar-title" type="text" placeholder="标杆视频标题 / 核心爆款金句">
+          <div class="add-radar-row">
+            <input id="new-radar-author" type="text" placeholder="账号名称 (如：董路足球精选)">
+            <input id="new-radar-velocity" type="number" placeholder="点赞增速/h (如 600)" value="500">
+            <input id="new-radar-likes" type="number" placeholder="当前点赞数 (如 8000)" value="5000">
+            <button id="btn-submit-add-radar" class="primary">保存并立即匹配素材</button>
+          </div>
+        </div>
+
+        <!-- 侦测到的爆款列表 -->
+        <div id="radar-items-container" class="radar-items-list">
+          <div class="insights-loading">正在侦测标杆账号实时爆款并比对素材库...</div>
+        </div>
+      </div>
+
+      <div class="traffic-insights-foot">
+        <button id="btn-refresh-radar" class="secondary">🔄 刷新雷达数据</button>
+        <button id="btn-close-radar">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=20261110-2"></script>
+</body>
+</html>

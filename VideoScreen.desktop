@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=VideoScreen 直播切片系统
+Comment=全自动直播录制与智能切片发布系统 (本地桌面客户端)
+Exec=/home/ubuntu/Applications/VideoScreen/start_gui.sh
+Icon=multimedia-video-player
+Terminal=false
+Categories=AudioVideo;Video;
+StartupNotify=true
+

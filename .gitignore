@@ -1,0 +1,95 @@
+# ==============================================================================
+# VideoScreen - Git 忽略规则清单 (用于 GitHub 开源)
+# ==============================================================================
+
+# --- Python 缓存与虚拟环境 ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv
+venv/
+ENV/
+env/
+
+# --- 本地配置文件与私密密钥 ---
+# 请使用 config.example.json 作为模板配置本地 config.json
+config.json
+.env
+.env.*
+*.pem
+*.key
+*.token
+
+# --- 本地数据库与运行时持久化状态 ---
+*.db
+*.sqlite
+*.sqlite3
+videos_v2.db
+clip_manifest.json
+publish_queue.json
+traffic_stats.json
+benchmark_radar.json
+screen_results.json
+
+# --- 视频素材与生成成片媒体库 (大体积二进制) ---
+*.mp4
+*.ts
+*.mkv
+*.flv
+*.avi
+*.mov
+*.wav
+*.mp3
+*.aac
+clips/
+results/
+ai_analysis/
+downloads_radar/
+.trash/
+
+# --- 直播录制组件运行时数据 ---
+live_recorder/downloads/
+live_recorder/logs/
+live_recorder/backup_config/
+live_recorder/.douyin_live_recorder.lock
+live_recorder/config/URL_config.ini
+live_recorder/config/config.ini
+
+# --- 自动化发布与浏览器用户数据 (含登录 Cookie) ---
+douyin_user_data/
+playwright_user_data/
+douyin_*.png
+*.png.bak
+
+# --- 日志文件 ---
+*.log
+dashboard_logs/
+*.out
+
+# --- 系统临时文件与备份 ---
+*.bak
+*.bak.*
+transcript.txt
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~

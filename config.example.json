@@ -1,0 +1,53 @@
+{
+  "mode": "hybrid",
+  "keywords": [
+    "高光",
+    "金句",
+    "名场面",
+    "干货",
+    "争议",
+    "互动",
+    "精彩",
+    "反转",
+    "热点"
+  ],
+  "keyword_aliases": {
+    "名场面": [
+      "名场面瞬间",
+      "经典瞬间"
+    ],
+    "干货": [
+      "核心观点",
+      "深度剖析"
+    ]
+  },
+  "min_score": 70,
+  "window_seconds": 300,
+  "overlap_seconds": 60,
+  "min_clip_seconds": 60,
+  "max_clip_seconds": 600,
+  "default_copy_style": "viral_highlight",
+  "ui_theme": "light",
+  "ai": {
+    "provider": "ollama",
+    "ollama": {
+      "base_url": "http://127.0.0.1:11434",
+      "model": "qwen2.5:7b",
+      "temperature": 0.55
+    },
+    "api": {
+      "preset": "deepseek",
+      "base_url": "https://api.deepseek.com/v1",
+      "api_key": "YOUR_API_KEY_HERE",
+      "model": "deepseek-chat",
+      "temperature": 0.6
+    }
+  },
+  "keyword_weights": {
+    "高光": 2.0,
+    "金句": 1.8,
+    "名场面": 1.5,
+    "干货": 1.2,
+    "热点": 1.0
+  }
+}
