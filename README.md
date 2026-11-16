@@ -2,161 +2,229 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%2B-blue.svg" alt="Python Version">
-  <img src="https://img.shields.io/badge/GUI-PyQt5%20macOS%20HIG-blueviolet.svg" alt="PyQt5">
-  <img src="https://img.shields.io/badge/Web-Modern%20Studio%20Dashboard-0071e3.svg" alt="Web Dashboard">
+  <img src="https://img.shields.io/badge/GUI-PyQt5%20macOS%20HIG-blueviolet.svg" alt="PyQt5 macOS HIG">
   <img src="https://img.shields.io/badge/ASR-SenseVoice%20Offline-green.svg" alt="ASR SenseVoice">
   <img src="https://img.shields.io/badge/AI%20LLM-Ollama%20%7C%20DeepSeek%20%7C%20Qwen-orange.svg" alt="AI LLM">
-  <img src="https://img.shields.io/badge/Clipping-FFmpeg%20Lossless-red.svg" alt="FFmpeg">
-  <img src="https://img.shields.io/badge/Uploader-Playwright%20Automation-teal.svg" alt="Playwright">
+  <img src="https://img.shields.io/badge/Video%20Engine-FFmpeg%20Lossless-red.svg" alt="FFmpeg">
+  <img src="https://img.shields.io/badge/Automation-Playwright%20Uploader-teal.svg" alt="Playwright">
+  <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-brightgreen.svg" alt="Platform">
   <img src="https://img.shields.io/badge/License-MIT-lightgrey.svg" alt="License">
 </p>
 
-**VideoScreen** 是一套专为内容创作者、MCN 机构和切片工作室设计的**全自动化直播切片与发布系统**。系统贯穿**「直播多机位录制 ➔ 语音高精转写 ➔ AI 高光挖掘 ➔ 毫秒级批量切片 ➔ 标杆爆款跟剪 ➔ 自动化批量发布」**全链路闭环，支持无人值守挂机批量出片。
+---
 
-同时提供 **macOS 原生设计规范（HIG）桌面端** 与 **Web 响应式控制台**，既能原生离线运行，也可部署于团队服务器。
+## 📖 项目简介
+
+**VideoScreen** 是一套专为自媒体创作者、MCN 机构和切片工作室打造的**全自动化直播录制、智能切片与发布一体化桌面系统**。
+
+系统打通了从推流监测到成品发布的全链路闭环：
+> **「多平台无人值守录制 ➔ SenseVoice 离线高精语音转写 ➔ 大模型深度语义价值挖掘 ➔ FFmpeg 毫秒级无损剪辑 ➔ 标杆爆款跟剪二次创作 ➔ Playwright 自动化批量发布」**
+
+前端界面严格遵循 **Apple macOS Human Interface Guidelines (HIG)** 设计哲学，采用 PyQt5 打造纯净专业的原生桌面应用，彻底脱离浏览器与 Web 端口依赖，保障数据本地私密与极速响应。
 
 ---
 
 ## 🌟 核心特性
 
 - 🔴 **全自动直播监控与多平台录制**
-  - 内置直播录制服务，支持抖音、快手、TikTok、虎牙、斗鱼等多平台。
-  - 主播开播自动嗅探推流并高码率分段录制，下播自动封包，录制状态毫秒级实时感知。
+  - 内置直播录播服务，支持抖音、快手、TikTok、微信视频号、虎牙、斗鱼等多主流平台。
+  - 主播开播秒级自动嗅探、多码率推流分段录制、断流重连与下播自动封包。
 
-- 🎙️ **SenseVoice 离线毫秒级高精度转写**
-  - 基于阿里开源 SenseVoice-Small 工业级语音识别模型，纯离线 GPU/CPU 加速运行，数据不出本地。
-  - 输出包含严格时间戳的字幕文本（支持情感标记、纯净过滤与同音纠错）。
+- 🎙️ **SenseVoice 工业级离线语音转写**
+  - 基于阿里开源 **SenseVoice-Small** 模型与高效 VAD 语音断句，纯本地 GPU / CPU 离线高速运行，零网络请求、数据不出本地。
+  - 精确输出带字级、句级时间戳的结构化字幕文本，自动过滤废话杂音，具备高精度同音错别字纠错能力。
 
-- 🧠 **AI 语义分析与高光价值挖掘**
-  - 无缝对接本地 **Ollama**（Qwen2.5 / Llama 3 / DeepSeek-R1）或云端大模型 API（DeepSeek / 通义千问 / 硅基流动）。
-  - 多维度打分引擎（观点犀利度、逻辑完整性、信息密度、金句爆发力），自动过滤废话、口癖与带货杂音，智能截取黄金切片区间。
+- 🧠 **大模型深度语义分析与高光打分挖掘**
+  - **多模型无缝切换**：原生支持本地 **Ollama**（Qwen2.5 / DeepSeek-R1 / Llama 3）及主流云端 API（DeepSeek / 通义千问 / 硅基流动）。
+  - **多维黄金标准打分**：从观点犀利度、逻辑完整性、信息密度、金句爆发力四重维度自动评级（默认 70+ 分保留），自动过滤垫话、客套与商业杂质，智能定位高光起止区间。
 
-- ✂️ **FFmpeg 极速精准无损剪辑**
-  - 毫秒级关键帧无损提取，杜绝二次重编码造成的画质劣化。
-  - 自动对齐音频音轨，支持全自动原素材空间释放与成片归档。
+- ✂️ **FFmpeg 毫秒级精准无损剪辑**
+  - 基于关键帧微调与智能编码剪裁，毫秒级切割，杜绝画面卡顿与黑帧，保持原始画质与音画严格同步。
+  - **智能空间瘦身**：支持原片物理清理功能，剪辑完成后可一键释放数十 GB 原录像磁盘空间，而转写文本、AI 候选数据与最终高清成片完好保留。
 
-- 🎯 **标杆爆款雷达与秒级同款跟剪**
-  - 实时追踪对标大号的爆款选题与点赞爆发增速。
-  - 秒级语义检索全素材库同款原声片段，一键跟剪出片；支持外部视频链接一键二次创作入库。
+- 🎯 **标杆爆款雷达与跟剪二创**
+  - 实时监控对标账号爆款选题与爆点热度。
+  - 秒级语义检索全素材库同款原声片段，一键跟剪出片；支持外部视频链接一键二次创作与智能混剪。
 
-- 🚀 **Playwright 驱动全自动化发布与文案反哺**
-  - 自动调用无头/有头浏览器对接创作者中心，自动填写标题、文案、标签与合集。
-  - 自动选取推荐封面、勾选自主声明，支持发布频率智能风控与发布后流量回访归因。
+- 🚀 **Playwright 驱动全自动化发布引擎**
+  - 驱动原生浏览器对接短视频创作者中心，全自动上传视频、填写爆款标题、精炼文案、热门标签与作品合集。
+  - 智能抓取优质推荐封面，支持多账号轮巡、防封控发布间隔延时与全自动无人值守排期。
+
+- 🎨 **macOS HIG 专业原生桌面体验**
+  - 纯净优雅的 Apple 现代设计美学：微质感卡片、胶囊分段导航、动态自适应布局与非阻塞异步多线程架构，操作流畅顺滑。
 
 ---
 
-## 🏗️ 系统全流程流水线架构
+## 🏗️ 系统全流程架构拓扑
 
 ```mermaid
-flowchart LR
-    A["01. 直播录制<br/>(网络推流捕获)"] --> B["02. 素材扫描<br/>(录像库检测)"]
-    B --> C["03. 语音转写<br/>(SenseVoice ASR)"]
-    C --> D["04. AI 分析<br/>(高光挖掘 70+)"]
-    D --> E["05. 批量剪辑<br/>(FFmpeg精准裁剪)"]
-    E --> F["06. 队列发布<br/>(Playwright推流)"]
+flowchart TD
+    subgraph Capture ["01. 信号捕获与素材入库"]
+        Live["多平台直播推流<br/>(抖音 / 快手 / 虎牙 / 斗鱼)"] --> Recorder["全自动录制服务<br/>(live_recorder)"]
+        Recorder --> VideoStore["本地录像库<br/>(downloads/*.mp4)"]
+        VideoStore --> Scan["核心总线扫描<br/>(video_screen scan)"]
+    end
 
-    subgraph Radar ["标杆爆款雷达 (Remix)"]
-        R1["对标账号监控"] --> R2["语义命中比对"] --> E
+    subgraph ASR ["02. 离线高精转写"]
+        Scan --> SenseVoice["SenseVoice-Small ASR<br/>(本地 GPU/CPU + VAD 断句)"]
+        SenseVoice --> Transcript["带时间戳结构化字幕<br/>(results/*/*.json)"]
+    end
+
+    subgraph Intelligence ["03. AI 爆款挖掘"]
+        Transcript --> LLM["大模型语义分析与评分<br/>(Ollama / DeepSeek / Qwen)"]
+        LLM --> Filter{"黄金高光判定<br/>Score >= 70?"}
+        Filter -- 否 --> Discard["过滤废话与垫话"]
+        Filter -- 是 --> Candidates["高价值切片候选库<br/>(ai_analysis/final_candidates.csv)"]
+    end
+
+    subgraph Radar ["04. 标杆爆款跟剪雷达"]
+        Bench["对标账号爆款"] --> Embed["语义向量对齐"]
+        Embed --> Candidates
+    end
+
+    subgraph Production ["05. 精准剪辑与发布"]
+        Candidates --> FFmpeg["FFmpeg 毫秒级剪辑引擎<br/>(精准裁切 / 音画对齐)"]
+        FFmpeg --> Clips["高清成片库<br/>(clips/*.mp4)"]
+        Clips --> Copywriter["AI 爆款发布文案生成<br/>(标题 + 标签 + 话题)"]
+        Copywriter --> Uploader["Playwright 浏览器自动化<br/>(创作者平台发布)"]
     end
 ```
 
 ---
 
-## 🖥️ 原生专业桌面客户端
+## 🖥️ 桌面客户端核心功能一览
 
-项目采用 **PyQt5** 深度实现，严格遵循 **Apple Human Interface Guidelines (macOS Sonoma / Ventura)** 设计哲学：
-- **设计风格**：采用原生 SF Pro 排版、微质感卡片、胶囊分段导航、动态自适应布局与非阻塞异步任务流。
-- **七大核心模块**：
-  1. **概览工作台**：全景监控素材总数、待转写数、AI 高光数、成品视频数及磁盘空间动态分布。
-  2. **直播录制**：集成多平台直播自动录像、状态监控、录制参数配置与实时控制。
-  3. **素材管理**：录像素材清单、一键扫描、SenseVoice 离线转写与原片物理清理瘦身。
-  4. **AI 候选**：大模型高光语义评分与分析详情预览、爆款原因洞察。
-  5. **成片发布**：高清单片/批量剪辑生成、智能发布文案生成、Playwright 全自动或半自动批量发布。
-  6. **账号雷达**：标杆创作者爆款跟剪与二次创作工作流。
-  7. **系统设置**：大模型后端（Ollama / 深度求索 / 智谱等）切换、转写引擎调节与重点人名/热词权重自定义。
+项目客户端分为 **7 大专业功能模块**：
+
+| 模块 | 核心功能说明 |
+| :--- | :--- |
+| **📊 概览工作台** | 实时大盘监控：总录像场次、待转写素材、AI 高光数、高清成品库、待发布队列与磁盘空间占用分布，支持一键流水线作业。 |
+| **🔴 直播录制** | 多房间开播监听、实时状态指示灯、录像进程生命周期控制与录制日志实时流查看。 |
+| **📁 素材管理** | 录像文件结构化树形表格、一键扫描同步、批量转写触发及原片一键物理清理瘦身。 |
+| **🧠 AI 候选** | 大模型挖掘出的高价值切片清单，支持查看黄金起止区间、精彩观点摘要、价值评分与片段内容预览。 |
+| **🎬 成片发布** | 成品切片快速预览与播放比例切换（16:9 / 9:16 / 自由铺满）、AI 发布文案实时润色、Playwright 自动化发布与队列排期。 |
+| **🎯 账号雷达** | 标杆竞对爆款数据监控、同款原声原片语义匹配跟剪、外部视频 URL 智能混剪与二创入库。 |
+| **⚙️ 系统设置** | AI 后端（Ollama / 深度求索 / 智谱等）切换、BaseURL 与模型名称配置、SenseVoice 引擎参数、重点人名与行业热词权重库自定义。 |
 
 ---
 
 ## 🚀 快速上手
 
-### 环境准备
+### 1. 环境准备
 
-- **操作系统**：Linux (Ubuntu 20.04+ 推荐) / macOS (Apple Silicon 最佳) / Windows (WSL2)
-- **Python**：3.10+
-- **系统核心依赖**：
+- **操作系统**：Linux (Ubuntu 20.04+ 推荐) / macOS (Apple Silicon 兼容) / Windows 11 (WSL2)
+- **Python 版本**：Python 3.10 或更高
+- **系统工具依赖**：
   ```bash
   # Ubuntu / Debian
   sudo apt-get update && sudo apt-get install -y ffmpeg libgl1-mesa-glx
   ```
 
-### 1. 克隆代码仓库
+### 2. 克隆代码仓库
 
 ```bash
-git clone https://github.com/your-username/VideoScreen.git
+git clone https://github.com/liuhao0318/VideoScreen.git
 cd VideoScreen
 ```
 
-### 2. 创建虚拟环境并安装依赖
+### 3. 创建虚拟环境并安装依赖
+
+推荐使用 Conda 隔离环境：
 
 ```bash
-# 推荐使用 conda 或 venv
+# 创建并激活 Python 3.10 环境
 conda create -n video-screen python=3.10 -y
 conda activate video-screen
 
-# 安装依赖
+# 安装项目核心依赖
 pip install -r requirements.txt
 
-# 安装 Playwright 浏览器内核 (用于自动化发布)
+# 安装 Playwright 自动化浏览器驱动内核
 playwright install chromium
 ```
 
-### 3. 配置系统参数
+### 4. 准备 AI 大模型（以 Ollama 本地运行为例）
 
-复制示例配置文件并根据需求调整：
+如果您选择纯本地私有化部署大模型，建议安装 [Ollama](https://ollama.com/) 并下载推荐模型：
+
+```bash
+# 启动 Ollama 服务并拉取推荐的通义千问 2.5 或 DeepSeek 模型
+ollama pull qwen2.5:7b
+# 或者：ollama pull deepseek-r1:7b
+```
+
+### 5. 初始化配置文件
+
+复制系统配置模板：
 
 ```bash
 cp config.example.json config.json
 ```
 
-在 `config.json` 中配置你的 AI 模型后端（默认支持 Ollama 本地模型）：
+根据您的实际情况编辑 `config.json`（示例配置）：
 ```json
 {
   "mode": "hybrid",
   "min_score": 70,
+  "context_seconds": 90,
   "ai": {
     "provider": "ollama",
     "ollama": {
       "base_url": "http://127.0.0.1:11434",
       "model": "qwen2.5:7b"
     }
+  },
+  "keywords": [
+    "高光",
+    "金句",
+    "干货",
+    "名场面",
+    "互动",
+    "争议"
+  ],
+  "keyword_weights": {
+    "高光": 1.5,
+    "金句": 1.3,
+    "干货": 1.2
   }
 }
 ```
 
-### 4. 启动系统
+---
 
-#### 方式 A：启动 macOS 极简原生桌面客户端
+## 💻 运行系统
+
+### 方式一：启动 macOS 极简原生桌面端（日常推荐）
+
 ```bash
+# 方式 A：通过预置启动脚本一键启动
 ./start_gui.sh
-# 或直接运行：python desktop_app.py
+
+# 方式 B：通过 Python 直接运行
+python desktop_app.py
 ```
 
-#### 方式 B：纯命令行挂机与单工序执行
+> **提示**：如果在 Linux 桌面环境下，可以将 `VideoScreen.desktop` 放入 `~/.local/share/applications/`，即可直接在系统应用菜单中点击图标启动。
+
+### 方式二：纯命令行无人值守流水线（服务器挂机）
+
+您也可以将脚本部署在没有图形界面的高性能服务器上，通过命令行进行流水线作业：
+
 ```bash
-# 1. 扫描新录像
+# 步骤 1：扫描录制目录中新增的视频素材
 python video_screen.py scan
 
-# 2. 批量转写录像
+# 步骤 2：执行 SenseVoice 离线批量语音转写
 python video_screen.py batch
 
-# 3. AI 分析与高光提取
+# 步骤 3：调用大模型进行语义分析与高光片段打分
 python analyze_videos.py
 
-# 4. 批量剪辑出片
-python prepare_clips.py
+# 步骤 4：驱动 FFmpeg 进行毫秒级关键帧切片出片
+python prepare_clips.py --min-duration 60 --max-duration 600 --cut
 
-# 5. 全自动流水线 (一键执行全部步骤)
-python video_screen.py auto
+# 步骤 5：批量自动化发布至创作者平台
+python batch_publish.py
 ```
 
 ---
@@ -165,41 +233,36 @@ python video_screen.py auto
 
 ```text
 VideoScreen/
-├── desktop_app.py            # macOS 原生风格 PyQt5 桌面客户端主程序
-├── core_service.py           # 核心业务服务引擎 (数据聚合 / 任务调度 / 状态流转)
-├── video_screen.py           # 核心控制总线 (扫描/转写调度/流水线驱动)
-├── analyze_videos.py         # AI 高光语义分析与评分挖掘模块
-├── prepare_clips.py          # FFmpeg 批量剪辑切片执行引擎
-├── publish_assistant.py      # 短视频智能发布文案生成引擎
-├── douyin_web_uploader.py    # Playwright 网页自动化发布模块
-├── benchmark_radar.py        # 标杆爆款监控与同款跟剪雷达引擎
+├── desktop_app.py            # macOS 原生风格 PyQt5 专业桌面客户端主程序
+├── core_service.py           # 核心业务总线服务 (数据聚合 / 任务调度 / 状态流转)
+├── video_screen.py           # 视频素材扫描、ASR 离线转写调度引擎
+├── analyze_videos.py         # AI 爆款语义挖掘、黄金高光区间打分引擎
+├── prepare_clips.py          # FFmpeg 批量毫秒级精准切片执行引擎
+├── publish_assistant.py      # 短视频智能发布文案/标签生成助手
+├── douyin_web_uploader.py    # Playwright 创作者平台自动化发布驱动
+├── benchmark_radar.py        # 标杆爆款数据监控与同款跟剪雷达引擎
 ├── remix_service.py          # 外部视频二次创作与混剪服务
-├── live_recorder/            # 直播全自动录制服务组件 (基于 DouyinLiveRecorder)
+├── live_recorder/            # 直播多平台自动录像底层组件 (基于 DouyinLiveRecorder)
 ├── live_recorder_service.py  # 录制服务生命周期管理器 (启动/停止/日志监控)
 ├── start_gui.sh              # 桌面客户端一键启动脚本
-├── config.example.json       # 系统配置模板示例
-├── requirements.txt          # Python 核心依赖清单
+├── config.example.json       # 系统脱敏配置模板
+├── requirements.txt          # Python 依赖清单
 ├── LICENSE                   # 开源许可协议 (MIT)
 └── README.md                 # 项目详细说明文档
 ```
 
 ---
 
-## ⚙️ 进阶配置与技巧
+## ⚙️ 实用技巧与最佳实践
 
-### 1. 监控词与领域词权重加成
-在 `config.json` 的 `keywords` 与 `keyword_weights` 中自定义你的关注词（如人名、特定行业术语或热门梗）。AI 在挖掘高光时会对命中核心词的片段予以优先保留和权重加分。
+### 1. 监控人名与业务热词加成
+在 `config.json` 的 `keywords` 与 `keyword_weights` 中配置您的重点观察词汇（如嘉宾名字、特定行业术语、核心产品名）。AI 在进行语义初筛与精细打分时，命中关键词的片段会获得更高的权重加成并优先入选切片候选。
 
-### 2. 磁盘空间自动瘦身
-直播原片体积较大，已剪辑完成的素材可通过界面中的 **「清理已剪原片」** 按钮一键物理删除，原始字幕文本、AI 候选数据与最终高清成片将完好保留。
+### 2. 磁盘空间快速瘦身
+长时间多机位直播录像极度占用硬盘空间（单场动辄 5~20 GB）。系统采用**元数据持久化分离机制**，当视频剪辑为成片后，在桌面端点击 **「清理已剪原片」** 即可安全物理删除庞大原片，而转写文本、时间戳、AI 分析报告及最终的高清切片将完好保留，大幅节省 90% 以上的硬盘空间。
 
 ---
 
-## 🤝 贡献与反馈
-
-欢迎提交 Issue 和 Pull Request！如果你在部署或使用过程中有任何疑问，请提交反馈。
-
 ## 📄 开源许可证
 
-本项目基于 [MIT License](LICENSE) 协议开源。
-
+本项目基于 [MIT License](LICENSE) 协议开源，欢迎自由使用、修改与衍生开发。
