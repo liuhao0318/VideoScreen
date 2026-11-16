@@ -2,10 +2,11 @@
 Version=1.0
 Type=Application
 Name=VideoScreen 直播切片系统
+GenericName=直播切片系统
 Comment=全自动直播录制与智能切片发布系统 (本地桌面客户端)
 Exec=/home/ubuntu/Applications/VideoScreen/start_gui.sh
-Icon=multimedia-video-player
+Icon=/home/ubuntu/Applications/VideoScreen/assets/icon.png
 Terminal=false
-Categories=AudioVideo;Video;
+Categories=AudioVideo;Video;AudioVideoEditing;
 StartupNotify=true
-
+Keywords=video;stream;clip;douyin;live;ai;

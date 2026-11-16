@@ -4,7 +4,7 @@ set -u
 # 导出 Conda 环境变量供后台子进程使用
 export PATH="/home/ubuntu/miniconda3/bin:/home/ubuntu/miniconda3/condabin:$PATH"
 
-PROJECT="/home/ubuntu/Applications/VideoScreen"
+PROJECT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT" || exit 1
 
 # 优先查找具备 PyQt5 桌面界面的 Python 解释器（Ubuntu 系统原生环境自带 PyQt5 5.15）

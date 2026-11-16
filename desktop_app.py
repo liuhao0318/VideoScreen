@@ -1286,6 +1286,10 @@ class VideoScreenMainWindow(QMainWindow):
         self.setWindowTitle("VideoScreen 直播切片系统 (本地执行桌面端)")
         self.resize(1300, 850)
 
+        icon_path = APP_DIR / "assets" / "icon.png"
+        if icon_path.is_file():
+            self.setWindowIcon(QIcon(str(icon_path)))
+
         # 读取用户界面主题设置，默认现代清爽浅色风 (Light)
         config_json = core_service.read_json(APP_DIR / "config.json", {})
         ui_theme = config_json.get("ui_theme", "light")
@@ -4795,6 +4799,9 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("VideoScreen")
+    icon_path = APP_DIR / "assets" / "icon.png"
+    if icon_path.is_file():
+        app.setWindowIcon(QIcon(str(icon_path)))
 
     window = VideoScreenMainWindow()
     # 默认直接最大化铺满屏幕，享受完整宽屏视野

@@ -194,8 +194,20 @@ cp config.example.json config.json
 
 ## 💻 运行系统
 
-### 方式一：启动 macOS 极简原生桌面端（日常推荐）
+### 方式一：安装桌面一键启动图标（强烈推荐）
 
+系统提供了一键桌面快捷方式安装器，自动配置高清应用图标并注册到系统应用中心与桌面：
+
+```bash
+# 运行一键安装脚本（自动配置桌面图标和应用菜单）
+bash install_desktop_shortcut.sh
+```
+
+> **效果**：
+> - 电脑桌面上将生成 **「VideoScreen 直播切片系统」** 专属图标，双击即可直接一键启动客户端！
+> - 在系统的「应用程序菜单 / Launchpad」中搜索 `VideoScreen` 也可以直接点击打开。
+
+### 方式二：终端直接启动
 ```bash
 # 方式 A：通过预置启动脚本一键启动
 ./start_gui.sh
@@ -203,8 +215,6 @@ cp config.example.json config.json
 # 方式 B：通过 Python 直接运行
 python desktop_app.py
 ```
-
-> **提示**：如果在 Linux 桌面环境下，可以将 `VideoScreen.desktop` 放入 `~/.local/share/applications/`，即可直接在系统应用菜单中点击图标启动。
 
 ### 方式二：纯命令行无人值守流水线（服务器挂机）
 
@@ -244,7 +254,10 @@ VideoScreen/
 ├── remix_service.py          # 外部视频二次创作与混剪服务
 ├── live_recorder/            # 直播多平台自动录像底层组件 (基于 DouyinLiveRecorder)
 ├── live_recorder_service.py  # 录制服务生命周期管理器 (启动/停止/日志监控)
-├── start_gui.sh              # 桌面客户端一键启动脚本
+├── assets/                   # 高清应用矢量图标与图形资产
+├── VideoScreen.desktop       # Linux 桌面快捷方式启动器配置
+├── install_desktop_shortcut.sh # 桌面一键启动安装配置脚本
+├── start_gui.sh              # 桌面客户端一键启动运行脚本
 ├── config.example.json       # 系统脱敏配置模板
 ├── requirements.txt          # Python 依赖清单
 ├── LICENSE                   # 开源许可协议 (MIT)
