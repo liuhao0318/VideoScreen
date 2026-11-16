@@ -75,7 +75,7 @@ from PyQt5.QtWidgets import (
 # 导入底层业务服务模块
 import ai_service
 import benchmark_radar
-import dashboard_server
+import core_service
 import remix_service
 import live_recorder_service
 
@@ -1103,7 +1103,7 @@ class PublishEditDialog(QDialog):
             self.txt_content.setText(self.clip_row["publish_content"])
             return
 
-        queue = dashboard_server.read_json(dashboard_server.QUEUE_JSON, [])
+        queue = core_service.read_json(core_service.QUEUE_JSON, [])
         target = os.path.abspath(self.output_path) if self.output_path else ""
         item = next(
             (r for r in queue if r.get("output") and os.path.abspath(r["output"]) == target),
@@ -1155,7 +1155,7 @@ class PublishEditDialog(QDialog):
         self.ai_elapsed_timer.start()
 
         self._worker = run_async_task(
-            dashboard_server.generate_publish_text,
+            core_service.generate_publish_text,
             self._on_ai_success,
             self._on_ai_error,
             self.output_path,
@@ -1206,7 +1206,7 @@ class PublishEditDialog(QDialog):
             QMessageBox.warning(self, "提示", "发布标题不能为空")
             return
         try:
-            dashboard_server.update_publish_text(self.output_path, title, content)
+            core_service.update_publish_text(self.output_path, title, content)
             self.has_changes = True
             self.accept()
         except Exception as e:
@@ -1287,7 +1287,7 @@ class VideoScreenMainWindow(QMainWindow):
         self.resize(1300, 850)
 
         # 读取用户界面主题设置，默认现代清爽浅色风 (Light)
-        config_json = dashboard_server.read_json(APP_DIR / "config.json", {})
+        config_json = core_service.read_json(APP_DIR / "config.json", {})
         ui_theme = config_json.get("ui_theme", "light")
         self.current_is_dark = (ui_theme == "dark")
         self.setStyleSheet(DARK_STYLE if self.current_is_dark else LIGHT_STYLE)
@@ -2704,7 +2704,7 @@ class VideoScreenMainWindow(QMainWindow):
         # 保存偏好到 config.json
         try:
             cfg_path = APP_DIR / "config.json"
-            cfg = dashboard_server.read_json(cfg_path, {})
+            cfg = core_service.read_json(cfg_path, {})
             cfg["ui_theme"] = "dark" if is_dark else "light"
             cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
         except Exception as e:
@@ -3134,7 +3134,7 @@ class VideoScreenMainWindow(QMainWindow):
 
     def on_action_cleanup(self):
         try:
-            overview = dashboard_server.build_overview()
+            overview = core_service.build_overview()
             cleanable = [x["path"] for x in overview.get("sources", []) if x.get("stage") == "ready" and x.get("exists")]
             gb = overview.get("storage", {}).get("cleanable_gb", 0.0)
             if not cleanable:
@@ -3154,7 +3154,7 @@ class VideoScreenMainWindow(QMainWindow):
                         if progress_cb:
                             progress_cb(int((i - 1) * 100 / total), f"清理 [{i}/{total}] {Path(src_p).name[:24]}")
                         try:
-                            r = dashboard_server.cleanup_source(src_p)
+                            r = core_service.cleanup_source(src_p)
                             deleted.append(r["source"])
                         except Exception as ex:
                             failed.append({"source": src_p, "error": str(ex)})
@@ -3195,14 +3195,14 @@ class VideoScreenMainWindow(QMainWindow):
         def _err(_err):
             self._is_refreshing_overview = False
 
-        run_async_task(dashboard_server.build_overview, _ok, _err)
+        run_async_task(core_service.build_overview, _ok, _err)
 
     # --------------------------------------------------------------------------
     # 数据加载与表格刷新
     # --------------------------------------------------------------------------
     def refresh_all_data(self):
         try:
-            overview = dashboard_server.build_overview()
+            overview = core_service.build_overview()
             self.refresh_overview_data(overview)
             self.refresh_sources_table(overview)
             self.refresh_candidates_table()
@@ -3214,7 +3214,7 @@ class VideoScreenMainWindow(QMainWindow):
     def refresh_overview_data(self, data=None):
         try:
             if data is None:
-                data = dashboard_server.build_overview()
+                data = core_service.build_overview()
             counts = data.get("counts", {})
             storage = data.get("storage", {})
 
@@ -3244,7 +3244,7 @@ class VideoScreenMainWindow(QMainWindow):
     def refresh_sources_table(self, overview=None):
         try:
             if overview is None:
-                overview = dashboard_server.build_overview()
+                overview = core_service.build_overview()
             sources = overview.get("sources", [])
             self.all_sources = sources
             self.filter_sources_table()
@@ -3384,7 +3384,7 @@ class VideoScreenMainWindow(QMainWindow):
             return
         if QMessageBox.question(self, "确认清理", f"确定清理原片吗？\n{s['name']}") == QMessageBox.Yes:
             try:
-                dashboard_server.cleanup_source(s["path"])
+                core_service.cleanup_source(s["path"])
                 QMessageBox.information(self, "成功", "原素材已清理！")
                 self.refresh_all_data()
             except Exception as e:
@@ -3421,7 +3421,7 @@ class VideoScreenMainWindow(QMainWindow):
 
     def refresh_candidates_table(self):
         csv_path = APP_DIR / "ai_analysis" / "candidates.csv"
-        rows = dashboard_server.read_csv(csv_path)
+        rows = core_service.read_csv(csv_path)
         self.all_candidates = rows
         self.filter_candidates_table()
 
@@ -3566,7 +3566,7 @@ class VideoScreenMainWindow(QMainWindow):
     def refresh_clips_table(self, overview=None):
         try:
             if overview is None:
-                overview = dashboard_server.build_overview()
+                overview = core_service.build_overview()
             self.all_clips = overview.get("clips", [])
             pending_cnt = sum(1 for c in self.all_clips if c.get("douyin_status") != "published")
             published_cnt = sum(1 for c in self.all_clips if c.get("douyin_status") == "published")
@@ -3888,7 +3888,7 @@ class VideoScreenMainWindow(QMainWindow):
             return
         c = self.table_clips.item(row, 1).data(Qt.UserRole)
         try:
-            dashboard_server.update_publish_status(c.get("index", 0), "douyin", new_status, c.get("output"))
+            core_service.update_publish_status(c.get("index", 0), "douyin", new_status, c.get("output"))
             self.refresh_clips_table()
             self.refresh_overview_data()
         except Exception as e:
@@ -3945,7 +3945,7 @@ class VideoScreenMainWindow(QMainWindow):
             if not out:
                 continue
             try:
-                dashboard_server.delete_clip(out, cleanup_file_only=False)
+                core_service.delete_clip(out, cleanup_file_only=False)
                 if hasattr(self, "checked_clip_outputs"):
                     self.checked_clip_outputs.discard(out)
                 deleted_cnt += 1
@@ -4029,7 +4029,7 @@ class VideoScreenMainWindow(QMainWindow):
             if not out:
                 continue
             try:
-                dashboard_server.delete_clip(out, cleanup_file_only=True)
+                core_service.delete_clip(out, cleanup_file_only=True)
                 if hasattr(self, "checked_clip_outputs"):
                     self.checked_clip_outputs.discard(out)
                 cleaned_cnt += 1
@@ -4103,7 +4103,7 @@ class VideoScreenMainWindow(QMainWindow):
             if not out:
                 continue
             try:
-                dashboard_server.delete_clip(out, cleanup_file_only=False)
+                core_service.delete_clip(out, cleanup_file_only=False)
                 if hasattr(self, "checked_clip_outputs"):
                     self.checked_clip_outputs.discard(out)
                 deleted_cnt += 1
@@ -4669,7 +4669,7 @@ class VideoScreenMainWindow(QMainWindow):
                 self.txt_ai_api_key.setText(api_cfg.get("api_key", ""))
 
             # 加载重点词
-            config_json = dashboard_server.read_json(APP_DIR / "config.json", {})
+            config_json = core_service.read_json(APP_DIR / "config.json", {})
             kws = config_json.get("keywords", [])
             self.txt_keywords.setPlainText("\n".join(kws))
         except Exception as e:
@@ -4777,7 +4777,7 @@ class VideoScreenMainWindow(QMainWindow):
             return
         try:
             cfg_path = APP_DIR / "config.json"
-            cfg = dashboard_server.read_json(cfg_path, {})
+            cfg = core_service.read_json(cfg_path, {})
             cfg["keywords"] = lines
             cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
             QMessageBox.information(self, "成功", f"已成功保存 {len(lines)} 个重点监控词！")

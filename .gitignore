@@ -80,6 +80,7 @@ douyin_*.png
 
 # --- 日志文件 ---
 *.log
+logs/
 dashboard_logs/
 *.out
 

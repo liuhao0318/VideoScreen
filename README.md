@@ -62,15 +62,18 @@ flowchart LR
 
 ---
 
-## 🖥️ 双端交互界面
+## 🖥️ 原生专业桌面客户端
 
-### 1. macOS HIG 原生专业桌面端 (`desktop_app.py`)
-- 严格遵循 Apple Human Interface Guidelines 规范，采用纯净 SF Pro 排版、微质感卡片与紧凑胶囊分段标签栏。
-- 完整涵盖：**概览工作台、直播录制、素材管理、AI 候选、成片发布、账号雷达、系统设置** 7 大模块。
-
-### 2. 现代 Web 响应式控制台 (`dashboard_server.py`)
-- 轻量级异步 Web 服务，支持局域网内任意手机、平板或浏览器直接访问。
-- 具备实时日志流推送、视频在线播放比例切换（16:9 / 9:16 / 自由铺满）、文案实时编辑等功能。
+项目采用 **PyQt5** 深度实现，严格遵循 **Apple Human Interface Guidelines (macOS Sonoma / Ventura)** 设计哲学：
+- **设计风格**：采用原生 SF Pro 排版、微质感卡片、胶囊分段导航、动态自适应布局与非阻塞异步任务流。
+- **七大核心模块**：
+  1. **概览工作台**：全景监控素材总数、待转写数、AI 高光数、成品视频数及磁盘空间动态分布。
+  2. **直播录制**：集成多平台直播自动录像、状态监控、录制参数配置与实时控制。
+  3. **素材管理**：录像素材清单、一键扫描、SenseVoice 离线转写与原片物理清理瘦身。
+  4. **AI 候选**：大模型高光语义评分与分析详情预览、爆款原因洞察。
+  5. **成片发布**：高清单片/批量剪辑生成、智能发布文案生成、Playwright 全自动或半自动批量发布。
+  6. **账号雷达**：标杆创作者爆款跟剪与二次创作工作流。
+  7. **系统设置**：大模型后端（Ollama / 深度求索 / 智谱等）切换、转写引擎调节与重点人名/热词权重自定义。
 
 ---
 
@@ -138,13 +141,7 @@ cp config.example.json config.json
 # 或直接运行：python desktop_app.py
 ```
 
-#### 方式 B：启动 Web 网页版控制台
-```bash
-./start_dashboard.sh
-# 浏览器访问：http://127.0.0.1:8780
-```
-
-#### 方式 C：纯命令行挂机与单工序执行
+#### 方式 B：纯命令行挂机与单工序执行
 ```bash
 # 1. 扫描新录像
 python video_screen.py scan
@@ -169,11 +166,7 @@ python video_screen.py auto
 ```text
 VideoScreen/
 ├── desktop_app.py            # macOS 原生风格 PyQt5 桌面客户端主程序
-├── dashboard_server.py       # Web 控制台后端服务 (HTTP API / 任务调度)
-├── dashboard_static/         # Web 控制台前端静态资源 (HTML / CSS / JS)
-│   ├── index.html
-│   ├── style.css
-│   └── enhancements.css
+├── core_service.py           # 核心业务服务引擎 (数据聚合 / 任务调度 / 状态流转)
 ├── video_screen.py           # 核心控制总线 (扫描/转写调度/流水线驱动)
 ├── analyze_videos.py         # AI 高光语义分析与评分挖掘模块
 ├── prepare_clips.py          # FFmpeg 批量剪辑切片执行引擎
@@ -184,7 +177,6 @@ VideoScreen/
 ├── live_recorder/            # 直播全自动录制服务组件 (基于 DouyinLiveRecorder)
 ├── live_recorder_service.py  # 录制服务生命周期管理器 (启动/停止/日志监控)
 ├── start_gui.sh              # 桌面客户端一键启动脚本
-├── start_dashboard.sh        # Web 控制台一键启动脚本
 ├── config.example.json       # 系统配置模板示例
 ├── requirements.txt          # Python 核心依赖清单
 ├── LICENSE                   # 开源许可协议 (MIT)
